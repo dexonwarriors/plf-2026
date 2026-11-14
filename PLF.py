@@ -400,7 +400,6 @@ def fetch_complete_league_data(league):
                     if slot in OFFENSE_SLOTS: season_offense[t_name] += player.points
                     elif slot in DEFENSE_SLOTS: season_defense[t_name] += player.points
 
-                # WICHTIG: Hier BE-Spieler für die Optimal-Berechnung EINBEZIEHEN (nur IR ausschließen)
                 all_players = [p for p in lineup if p.points is not None and str(getattr(p, 'slot_position', '')).upper() != 'IR']
                 opt_score = calculate_optimal_score(all_players)
                 diff = actual_pts - opt_score
@@ -432,7 +431,7 @@ def fetch_complete_league_data(league):
                         'Optimal': opt_score,
                         'Effizienz (%)': efficiency
                     })
-# --- Awards für diese spezifische Woche berechnen ---
+
         week_awards_list = []
         if weekly_results:
             df_w_teams = pd.DataFrame(weekly_results)
@@ -508,7 +507,7 @@ def fetch_complete_league_data(league):
         all_weeks_data[w] = {
             "current_matchups": week_matchups,
             "player_projections": week_projections,
-            "awards": week_awards_list  # <--- Hier werden die Awards für diese Woche hinterlegt
+            "awards": week_awards_list
         }
 
         df_weekly = pd.DataFrame(weekly_results)
@@ -710,28 +709,6 @@ def main():
             "Saison-Kontext": f"Aktuell: {mvp_rank}. in der MVP-Wertung ({int(mvp_pts)} P)"
         })
 
-        print("=" * 55)
-        print(f"🏆 TEAM DER WOCHE (Woche {target_award_week})")
-        print("=" * 55)
-        print(f"Gewinner:       {t_totw['Team']}")
-        print(f"Punkte:         {t_totw['Tatsächlich']} Pkt.")
-        print("-" * 55)
-
-        print(f"⚡ OFFENSIVE DER WOCHE (Woche {target_award_week})")
-        print(f"Gewinner:       {t_off['Team']}")
-        print(f"Offense-Punkte: {t_off['Offense']} Pkt.")
-        print("-" * 55)
-
-        print(f"🛡️ DEFENSIVE DER WOCHE (Woche {target_award_week})")
-        print(f"Gewinner:       {t_def['Team']}")
-        print(f"IDP-Punkte:     {t_def['IDP']} Pkt.")
-        print("-" * 55)
-
-        print(f"🧠 COACH DER WOCHE (Woche {target_award_week})")
-        print(f"Gewinner:       {t_coach['Team']}")
-        print(f"Effizienz:      {t_coach['Effizienz (%)']}% (Tatsächlich: {t_coach['Tatsächlich']} / Optimal: {t_coach['Optimal']} Pkt.)")
-        print("=" * 55)
-
     if cw_matchups:
         df_match = pd.DataFrame(cw_matchups).sort_values(by="Matchup Index", ascending=False).reset_index(drop=True)
         top_match = df_match.iloc[0]
@@ -857,7 +834,11 @@ def main():
     cols_to_drop_espn = [c for c in ["Off_Raw", "Def_Raw", "Coach_Raw", "Offense (Pkt)", "Defense (Pkt)", "Coach Verschenkt"] if c in df_espn.columns]
     df_espn_clean = df_espn.drop(columns=cols_to_drop_espn)
 
+    # Aktuellen Zeitstempel für das Frontend generieren (z.B. "15.11.2026, 12:09 Uhr")
+    formatted_timestamp = datetime.now().strftime("%d.%m.%Y, %H:%M Uhr")
+
     web_data = {
+        "last_updated": formatted_timestamp,  # <--- HIER WIRD DER ZEITSTEMPEL ÜBERGEBEN
         "current_week": current_week,
         "all_weeks": all_weeks_data,
         "mvp_table": df_mvp.to_dict(orient="records"),
