@@ -591,10 +591,14 @@ document.addEventListener("DOMContentLoaded", () => {
 // Funktion zum Laden der Live-Daten
 async function loadLeagueData(isInitialLoad = false) {
     try {
-        // Da index.html und data.json im selben Verzeichnis liegen, ist ein relativer Pfad am sichersten
-        const fetchUrl = 'data.json?t=' + new Date().getTime();
-        console.log("🔍 Versuche Daten zu laden von:", fetchUrl);
+        // Auf GitHub Pages erzwingen wir den exakten absoluten Pfad mit dem Repo-Namen
+        let fetchUrl = 'data.json';
+        if (window.location.hostname.includes('github.io')) {
+            fetchUrl = '/plf-2026/data.json';
+        }
+        fetchUrl += '?t=' + new Date().getTime();
 
+        console.log("🔍 Lade Daten von:", fetchUrl);
         const response = await fetch(fetchUrl);
         
         if (!response.ok) {
