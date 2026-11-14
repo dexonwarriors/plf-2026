@@ -576,18 +576,16 @@ if (browserTimeEl) browserTimeEl.innerText = now;
 // ==========================================
 // ZENTRALE INITIALISIERUNG BEIM SEITENSTART
 // ==========================================
-document.addEventListener("DOMContentLoaded", () => {
-    // Starte den ersten Ladevorgang (Initial Load)
-    loadLeagueData(true); 
-    
-    // Starte den 3-Minuten-Intervall für Hintergrund-Updates
-    setInterval(() => loadLeagueData(false), 180000); 
+// SAUBER: Wir warten einfach, bis das DOM bereit ist und starten nur den Lader
+document.addEventListener('DOMContentLoaded', () => {
+    // Starte den Datenabruf beim Seitenaufruf
+    loadLeagueData(true);
 
-    // Starte den NFL-Scores Live-Poller (alle 30 Sek.)
-    fetchRealNFLScores();
-    setInterval(fetchRealNFLScores, 30000);
+    // Optional: Auto-Refresh alle 3 Minuten einrichten
+    setInterval(() => {
+        loadLeagueData(false);
+    }, 3 * 60 * 1000);
 });
-
 // Funktion zum Laden der Live-Daten (100% fehlerfrei abgesichert)
 async function loadLeagueData(isInitialLoad = false) {
     try {
