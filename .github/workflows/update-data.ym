@@ -22,7 +22,7 @@ jobs:
           pip install pandas espn_api requests
 
       - name: PLF Skript ausführen
-        run: python PLF.py
+        run: python PLF_data.py
 
       - name: Aktualisierte data.json speichern
         run: |
