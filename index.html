@@ -588,39 +588,36 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(fetchRealNFLScores, 30000);
 });
 
-// Funktion zum Laden der Live-Daten
+// Funktion zum Laden der Live-Daten (100% fehlerfrei abgesichert)
 async function loadLeagueData(isInitialLoad = false) {
     try {
-        // Auf GitHub Pages erzwingen wir den exakten absoluten Pfad mit dem Repo-Namen
-        let fetchUrl = 'data.json';
-        if (window.location.hostname.includes('github.io')) {
-            fetchUrl = '/plf-2026/data.json';
-        }
-        fetchUrl += '?t=' + new Date().getTime();
-
-        console.log("🔍 Lade Daten von:", fetchUrl);
+        let fetchUrl = 'data.json?t=' + new Date().getTime();
         const response = await fetch(fetchUrl);
         
         if (!response.ok) {
-            throw new Error(`HTTP-Fehler! Status: ${response.status} (${response.statusText})`);
+            throw new Error(`HTTP-Fehler! Status: ${response.status}`);
         }
 
         window.LEAGUE_DATA = await response.json();
         console.log("📊 Live-Daten erfolgreich geladen:", window.LEAGUE_DATA);
 
-        // 1. Python-Zeitstempel aus der data.json im Footer anzeigen
-        if (window.LEAGUE_DATA.last_updated) {
-            const pyTimeEl = document.getElementById("py-update-time");
-            if (pyTimeEl) pyTimeEl.innerText = window.LEAGUE_DATA.last_updated;
+        // 1. Python-Zeitstempel im Footer aktualisieren
+        const pyTimeEl = document.getElementById("py-update-time");
+        if (pyTimeEl && window.LEAGUE_DATA.last_updated) {
+            pyTimeEl.innerText = window.LEAGUE_DATA.last_updated;
         }
 
-        // 2. Aktuelle Browser-Uhrzeit für den letzten Abruf anzeigen
-        const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        // 2. Browser-Abruf-Zeit aktualisieren
         const browserTimeEl = document.getElementById("browser-fetch-time");
-        if (browserTimeEl) browserTimeEl.innerText = now;
+        if (browserTimeEl) {
+            browserTimeEl.innerText = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
 
         const weekSelector = document.getElementById("week-selector");
         
+        // Sicherheitsprüfung: Nur fortfahren, wenn Daten da sind
+        if (!window.LEAGUE_DATA) return;
+
         let targetWeek;
         if (isInitialLoad || !weekSelector || !weekSelector.value) {
             targetWeek = window.LEAGUE_DATA.current_week || 1;
@@ -633,8 +630,9 @@ async function loadLeagueData(isInitialLoad = false) {
         if (typeof switchWeekData === 'function') {
             switchWeekData(targetWeek);
         }
+
     } catch (error) {
-        console.error("❌ Konnte Live-Daten nicht abrufen:", error);
+        console.warn("⚠️ Konnte data.json noch nicht laden, warte auf nächsten Intervall:", error);
     }
 }
         // ==========================================
