@@ -576,14 +576,19 @@ if (browserTimeEl) browserTimeEl.innerText = now;
 // ==========================================
 // ZENTRALE INITIALISIERUNG BEIM SEITENSTART
 // ==========================================
-// SAUBER: Wir warten einfach, bis das DOM bereit ist und starten nur den Lader
 document.addEventListener('DOMContentLoaded', () => {
-    // Starte den Datenabruf beim Seitenaufruf
-    loadLeagueData(true);
+    // Wir geben der Seite 1,5 Sekunden Puffer, damit GitHub Pages stabil steht
+    setTimeout(() => {
+        if (typeof loadLeagueData === 'function') {
+            loadLeagueData(true);
+        }
+    }, 1500); // 1500 Millisekunden = 1,5 Sekunden Verzögerung
 
-    // Optional: Auto-Refresh alle 3 Minuten einrichten
+    // Danach ganz normal alle 3 Minuten aktualisieren lassen
     setInterval(() => {
-        loadLeagueData(false);
+        if (typeof loadLeagueData === 'function') {
+            loadLeagueData(false);
+        }
     }, 3 * 60 * 1000);
 });
 // Funktion zum Laden der Live-Daten (100% fehlerfrei abgesichert)
