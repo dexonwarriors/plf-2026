@@ -591,15 +591,14 @@ document.addEventListener("DOMContentLoaded", () => {
 // Funktion zum Laden der Live-Daten
 async function loadLeagueData(isInitialLoad = false) {
     try {
-        // Prüfen, ob wir auf GitHub Pages im Projekt-Ordner sind (mit oder ohne Slash)
-        let dataFile = 'data.json';
-        if (window.location.pathname.includes('/plf-2026')) {
-            dataFile = '/plf-2026/data.json';
-        }
+        // Da index.html und data.json im selben Verzeichnis liegen, ist ein relativer Pfad am sichersten
+        const fetchUrl = 'data.json?t=' + new Date().getTime();
+        console.log("🔍 Versuche Daten zu laden von:", fetchUrl);
 
-        const response = await fetch(`${dataFile}?t=${new Date().getTime()}`);
+        const response = await fetch(fetchUrl);
+        
         if (!response.ok) {
-            throw new Error(`HTTP-Fehler! Status: ${response.status} - Konnte ${dataFile} nicht laden.`);
+            throw new Error(`HTTP-Fehler! Status: ${response.status} (${response.statusText})`);
         }
 
         window.LEAGUE_DATA = await response.json();
