@@ -588,20 +588,28 @@ document.addEventListener("DOMContentLoaded", () => {
     setInterval(fetchRealNFLScores, 30000);
 });
 
-// Funktion zum Laden der Live-Daten (Zentrale Steuerung)
+// Funktion zum Laden der Live-Daten
 async function loadLeagueData(isInitialLoad = false) {
     try {
-        const response = await fetch(`data.json?t=${new Date().getTime()}`);
-        if (!response.ok) throw new Error("Fehler beim Laden der data.json");
+        // Wir ermitteln den Basis-Pfad (funktioniert lokal, Netlify und GitHub Pages)
+        const response = window.location.pathname.includes('/plf-2026/') 
+            ? await fetch(`/plf-2026/data.json?t=${new Date().getTime()}`)
+            : await fetch(`data.json?t=${new Date().getTime()}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP-Fehler! Status: ${response.status} - Datei nicht gefunden.`);
+        }
 
         window.LEAGUE_DATA = await response.json();
         console.log("📊 Live-Daten erfolgreich geladen:", window.LEAGUE_DATA);
 
-        // 1. Zeitstempel im Footer aktualisieren (falls eingebaut)
+        // 1. Python-Zeitstempel aus der data.json anzeigen (falls im Footer eingebaut)
         if (window.LEAGUE_DATA.last_updated) {
             const pyTimeEl = document.getElementById("py-update-time");
             if (pyTimeEl) pyTimeEl.innerText = window.LEAGUE_DATA.last_updated;
         }
+
+        // 2. Aktuelle Browser-Uhrzeit für den letzten Abruf anzeigen
         const now = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const browserTimeEl = document.getElementById("browser-fetch-time");
         if (browserTimeEl) browserTimeEl.innerText = now;
@@ -617,270 +625,11 @@ async function loadLeagueData(isInitialLoad = false) {
             targetWeek = weekSelector.value;
         }
 
-        // 2. WENN ES DER ERSTE LADESTART WAR: Zeichne einmalig die Haupttabellen, Charts & Awards
-        if (isInitialLoad) {
-            renderMainPortalTablesAndCharts();
-        }
-
-        // 3. Aktive Woche schalten (aktualisiert Matchups & Ticker)
         if (typeof switchWeekData === 'function') {
             switchWeekData(targetWeek);
         }
-
     } catch (error) {
         console.error("❌ Konnte Live-Daten nicht abrufen:", error);
-    }
-}
-
-// ==========================================
-// RENDER-FUNKTION FÜR HAUPTPORTAL (Charts, MVP, ESPN etc.)
-// ==========================================
-function renderMainPortalTablesAndCharts() {
-    const data = window.LEAGUE_DATA;
-    if (!data) return;
-
-    // Woche-Labels im Header/Ticker setzen
-    const weekVal = data.current_week || 1;
-    const weekEl = document.getElementById("current-week-display");
-    if (weekEl) {
-        weekEl.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>Aktuelle Woche: <strong class="text-white">Woche ${weekVal}</strong></span>
-        `;
-    }
-
-    const tWL = document.getElementById("ticker-week-label");
-    if (tWL) tWL.innerText = `Woche ${weekVal}`;
-    const tWLH = document.getElementById("ticker-week-label-home");
-    if (tWLH) tWLH.innerText = `Woche ${weekVal}`;
-
-    // Waiver Report & Charts
-    if (data.waiver_report) {
-        const wr = data.waiver_report;
-        const heatBanner = document.getElementById("waiver-heat-banner");
-        if (heatBanner) heatBanner.innerText = wr.heat_text || "Waiver-Heat-Index aktiv";
-        
-        const transHeader = document.getElementById("trans-total-header");
-        if (transHeader) transHeader.innerText = `Transaktionen gesamt: ${wr.total_moves} Spieler bewegt`;
-        
-        const sW = document.getElementById("stat-waiver");
-        if (sW) sW.innerHTML = `<span>Davon via Waiver-Verpflichtung:</span> <strong class="text-slate-200">${wr.stats ? wr.stats.Waiver : 0}</strong>`;
-        const sFA = document.getElementById("stat-fa");
-        if (sFA) sFA.innerHTML = `<span>Davon via Free Agency:</span> <strong class="text-slate-200">${wr.stats ? wr.stats.FA : 0}</strong>`;
-        const sTr = document.getElementById("stat-trade");
-        if (sTr) sTr.innerHTML = `<span>Davon via Trade:</span> <strong class="text-slate-200">${wr.stats ? wr.stats.Trade : 0}</strong>`;
-        const sDr = document.getElementById("stat-drops");
-        if (sDr) sDr.innerHTML = `<span>Davon via Drops:</span> <strong class="text-slate-200">${wr.stats ? wr.stats.Drops : 0}</strong>`;
-
-        // Transaktions-Pie-Chart
-        const ctx = document.getElementById('transactionsChart');
-        if (ctx) {
-            if (window.myChartInstance) window.myChartInstance.destroy();
-            window.myChartInstance = new Chart(ctx.getContext('2d'), {
-                type: 'pie',
-                data: {
-                    labels: ['Waiver', 'FA', 'Trade', 'Drops'],
-                    datasets: [{
-                        data: wr.stats ? [wr.stats.Waiver, wr.stats.FA, wr.stats.Trade, wr.stats.Drops] : [0, 0, 0, 0],
-                        backgroundColor: ['#3b82f6', '#eab308', '#22c55e', '#ef4444'],
-                        borderWidth: 1, borderColor: '#0f172a'
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } } }
-                    }
-                }
-            });
-        }
-
-        const bs = wr.budget_stats || {};
-        const totalBudgetMoved = (bs["Waiver-Budget"] || 0) + (bs["Trade-Budget"] || 0) + (bs["Fiktive Kosten"] || 0) + (bs["Realisierte Kosten"] || 0);
-        
-        const bHeader = document.getElementById("budget-total-header");
-        if (bHeader) bHeader.innerText = `Bewegtes Budget: ${totalBudgetMoved} $`;
-        
-        const sbW = document.getElementById("stat-budget-waiver");
-        if (sbW) sbW.innerHTML = `<span>Davon für Waiver genutztes Budget:</span> <strong class="text-slate-200">${bs["Waiver-Budget"] || 0} $</strong>`;
-        const sbT = document.getElementById("stat-budget-trade");
-        if (sbT) sbT.innerHTML = `<span>Davon bei Trades:</span> <strong class="text-slate-200">${bs["Trade-Budget"] || 0} $</strong>`;
-        const sbF = document.getElementById("stat-budget-fiktiv");
-        if (sbF) sbF.innerHTML = `<span>Davon fiktive Transaktionskosten:</span> <strong class="text-slate-200">${bs["Fiktive Kosten"] || 0} $</strong>`;
-        const sbR = document.getElementById("stat-budget-real");
-        if (sbR) sbR.innerHTML = `<span>Davon realisierte Transaktionskosten:</span> <strong class="text-slate-200">${bs["Realisierte Kosten"] || 0} $</strong>`;
-
-        // Budget-Pie-Chart
-        const ctxBudget = document.getElementById('budgetChart');
-        if (ctxBudget) {
-            if (window.budgetChartInstance) window.budgetChartInstance.destroy();
-            window.budgetChartInstance = new Chart(ctxBudget.getContext('2d'), {
-                type: 'pie',
-                data: {
-                    labels: ['Waiver-Budget', 'Trade-Budget', 'Fiktive Kosten', 'Realisierte Kosten'],
-                    datasets: [{
-                        data: [bs["Waiver-Budget"] || 0, bs["Trade-Budget"] || 0, bs["Fiktive Kosten"] || 0, bs["Realisierte Kosten"] || 0],
-                        backgroundColor: ['#3b82f6', '#22c55e', '#eab308', '#ef4444'],
-                        borderWidth: 1, borderColor: '#0f172a'
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } } }
-                    }
-                }
-            });
-        }
-    }
-
-    // MVP Tabelle
-    const mvpBody = document.getElementById("mvp-table-body");
-    if (mvpBody && data.mvp_table) {
-        mvpBody.innerHTML = "";
-        data.mvp_table.forEach(row => {
-            const rowClass = row.Platz === 1 ? 'rank-gold' : '';
-            mvpBody.innerHTML += `
-                <tr class="hover:bg-slate-800/50 transition ${rowClass}">
-                    <td class="p-3 font-bold text-slate-300">${row.Platz}</td>
-                    <td class="p-3"><img src="${row.Logo || ''}" class="team-logo-cell"></td>
-                    <td class="p-3 font-semibold text-white">${row.Team}</td>
-                    <td class="p-3 text-xs font-mono">${formatTrend(row.Trend)}</td>
-                    <td class="p-3">${row.Liga || 0}</td>
-                    <td class="p-3">${row.Off || 0}</td>
-                    <td class="p-3">${row.Def || 0}</td>
-                    <td class="p-3">${row.Coach || 0}</td>
-                    <td class="p-3">${row.Bonus || 0}</td>
-                    <td class="p-3">${row["Team d. Woche"] || 0}</td>
-                    <td class="p-3 text-right font-black text-blue-400">${row["Pkt. Gesamt"]} Pkt</td>
-                </tr>
-            `;
-        });
-    }
-
-    // ESPN Gesamttabelle
-    const espnBody = document.getElementById("espn-table-body");
-    if (espnBody && data.espn_table) {
-        espnBody.innerHTML = "";
-        data.espn_table.forEach(row => {
-            const rowClass = getStandingsRankClass(row.Platz);
-            espnBody.innerHTML += `
-                <tr class="hover:bg-slate-800/50 transition ${rowClass}">
-                    <td class="p-3 font-bold text-slate-300">${row.Platz}</td>
-                    <td class="p-3"><img src="${row.Logo || ''}" class="team-logo-cell"></td>
-                    <td class="p-3 font-semibold text-white">${row.Team}</td>
-                    <td class="p-3 text-xs font-mono">${formatTrend(row.Trend)}</td>
-                    <td class="p-3 text-slate-300 text-xs">${row.Division || '—'}</td>
-                    <td class="p-3 text-green-400 font-bold">${row.Wins}</td>
-                    <td class="p-3 text-red-400">${row.Losses}</td>
-                    <td class="p-3">${row.PCT}</td>
-                    <td class="p-3">${row.PF}</td>
-                    <td class="p-3">${row.PA}</td>
-                    <td class="p-3 font-mono text-xs">${row.STRK}</td>
-                    <td class="p-3 text-right font-bold text-blue-400">${row["Playoff %"]}%</td>
-                </tr>
-            `;
-        });
-    }
-
-    // Divisions-Container
-    const divisionsContainer = document.getElementById("divisions-container");
-    if (divisionsContainer && data.divisions) {
-        const order = ["Premier Division", "Challenger Division", "Contender Division", "Development Division"];
-        let mainDivsHtml = "";
-        order.forEach(divName => {
-            const divTeams = data.divisions[divName];
-            if (!divTeams) return;
-            let mainRows = "";
-            divTeams.forEach(t => {
-                mainRows += `
-                    <tr class="hover:bg-slate-800/50 transition">
-                        <td class="p-2 font-bold text-slate-300 text-xs">${t["Div-Rang"]}</td>
-                        <td class="p-2"><img src="${t.Logo}" class="w-6 h-6 rounded-full object-cover"></td>
-                        <td class="p-2 font-semibold text-white text-xs">${t.Team}</td>
-                        <td class="p-2 text-green-400 font-bold text-xs">${t.Wins}</td>
-                        <td class="p-2 text-red-400 text-xs">${t.Losses}</td>
-                        <td class="p-2 text-xs">${t.PCT}</td>
-                        <td class="p-2 text-xs">${t.PF}</td>
-                        <td class="p-2 text-xs">${t.PA}</td>
-                        <td class="p-2 font-mono text-xs">${t.STRK}</td>
-                        <td class="p-2 text-right font-bold text-blue-400 text-xs">${t["Playoff %"]}%</td>
-                    </tr>
-                `;
-            });
-            mainDivsHtml += `
-                <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 shadow-lg">
-                    <h4 class="text-sm font-bold text-blue-400 uppercase tracking-wider mb-3 pb-2 border-b border-slate-800">${divName}</h4>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="border-b border-slate-900 text-slate-400 text-[10px] uppercase tracking-wider">
-                                    <th class="p-2">Rang</th><th class="p-2">Logo</th><th class="p-2">Team</th>
-                                    <th class="p-2">W</th><th class="p-2">L</th><th class="p-2">PCT</th>
-                                    <th class="p-2">PF</th><th class="p-2">PA</th><th class="p-2">STRK</th><th class="p-2 text-right">Playoff %</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-900/60">${mainRows}</tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-        });
-        divisionsContainer.innerHTML = mainDivsHtml;
-    }
-
-    // Offense / Defense / Coach Tabellen
-    const offBody = document.getElementById("offense-table-body");
-    if (offBody && data.offense_table) {
-        offBody.innerHTML = "";
-        data.offense_table.forEach(row => {
-            const rowClass = row.Rang === 1 ? 'rank-gold' : '';
-            offBody.innerHTML += `
-                <tr class="hover:bg-slate-800/50 transition ${rowClass}">
-                    <td class="p-3 font-bold text-slate-400">${row.Rang}</td>
-                    <td class="p-3"><img src="${row.Logo || ''}" class="team-logo-small"></td>
-                    <td class="p-3 font-semibold text-white">${row.Team}</td>
-                    <td class="p-3 text-xs font-mono">${formatTrend(row.Trend)}</td>
-                    <td class="p-3 text-right font-black text-blue-400">${row["Offense (Pkt)"]} Pkt</td>
-                </tr>
-            `;
-        });
-    }
-
-    const defBody = document.getElementById("defense-table-body");
-    if (defBody && data.defense_table) {
-        defBody.innerHTML = "";
-        data.defense_table.forEach(row => {
-            const rowClass = row.Rang === 1 ? 'rank-gold' : '';
-            defBody.innerHTML += `
-                <tr class="hover:bg-slate-800/50 transition ${rowClass}">
-                    <td class="p-3 font-bold text-slate-400">${row.Rang}</td>
-                    <td class="p-3"><img src="${row.Logo || ''}" class="team-logo-small"></td>
-                    <td class="p-3 font-semibold text-white">${row.Team}</td>
-                    <td class="p-3 text-xs font-mono">${formatTrend(row.Trend)}</td>
-                    <td class="p-3 text-right font-black text-blue-400">${row["Defense (Pkt)"]} Pkt</td>
-                </tr>
-            `;
-        });
-    }
-
-    const coachBody = document.getElementById("coach-table-body");
-    if (coachBody && data.coach_table) {
-        coachBody.innerHTML = "";
-        data.coach_table.forEach(row => {
-            const rowClass = row.Rang === 1 ? 'rank-gold' : '';
-            coachBody.innerHTML += `
-                <tr class="hover:bg-slate-800/50 transition ${rowClass}">
-                    <td class="p-3 font-bold text-slate-400">${row.Rang}</td>
-                    <td class="p-3"><img src="${row.Logo || ''}" class="team-logo-small"></td>
-                    <td class="p-3 font-semibold text-white">${row.Team}</td>
-                    <td class="p-3 text-xs font-mono">${formatTrend(row.Trend)}</td>
-                    <td class="p-3 text-right font-black text-blue-400">${row["Coach Verschenkt"]} Pkt</td>
-                </tr>
-            `;
-        });
     }
 }
         // ==========================================
