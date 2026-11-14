@@ -591,19 +591,21 @@ document.addEventListener("DOMContentLoaded", () => {
 // Funktion zum Laden der Live-Daten
 async function loadLeagueData(isInitialLoad = false) {
     try {
-        // Wir ermitteln den Basis-Pfad (funktioniert lokal, Netlify und GitHub Pages)
-        const response = window.location.pathname.includes('/plf-2026/') 
-            ? await fetch(`/plf-2026/data.json?t=${new Date().getTime()}`)
-            : await fetch(`data.json?t=${new Date().getTime()}`);
+        // Prüfen, ob wir auf GitHub Pages im Projekt-Ordner sind (mit oder ohne Slash)
+        let dataFile = 'data.json';
+        if (window.location.pathname.includes('/plf-2026')) {
+            dataFile = '/plf-2026/data.json';
+        }
 
+        const response = await fetch(`${dataFile}?t=${new Date().getTime()}`);
         if (!response.ok) {
-            throw new Error(`HTTP-Fehler! Status: ${response.status} - Datei nicht gefunden.`);
+            throw new Error(`HTTP-Fehler! Status: ${response.status} - Konnte ${dataFile} nicht laden.`);
         }
 
         window.LEAGUE_DATA = await response.json();
         console.log("📊 Live-Daten erfolgreich geladen:", window.LEAGUE_DATA);
 
-        // 1. Python-Zeitstempel aus der data.json anzeigen (falls im Footer eingebaut)
+        // 1. Python-Zeitstempel aus der data.json im Footer anzeigen
         if (window.LEAGUE_DATA.last_updated) {
             const pyTimeEl = document.getElementById("py-update-time");
             if (pyTimeEl) pyTimeEl.innerText = window.LEAGUE_DATA.last_updated;
