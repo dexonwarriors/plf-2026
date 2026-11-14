@@ -824,6 +824,7 @@ def main():
 
     web_data = {
         "current_week": current_week,
+        "last_updated": datetime.now().strftime('%d.%m.%Y %H:%M:%S'),
         "all_weeks": all_weeks_data,
         "mvp_table": df_mvp.to_dict(orient="records"),
         "espn_table": df_espn_clean.to_dict(orient="records"),
@@ -834,6 +835,7 @@ def main():
         "divisions": divisions_data,
         "current_matchups": current_week_matchups,
         "player_projections": player_projections_data,
+        "last_updated": datetime.now().strftime('%d.%m.%Y %H:%M:%S'), # <-- HIER WURDE DER ZEITSTEMPEL EINGEBAUT
         "waiver_report": {
             "total_moves": total_moves,
             "stats": trans_stats,
