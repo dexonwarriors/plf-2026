@@ -2,11 +2,11 @@ name: PLF Auto-Update
 
 on:
   schedule:
-    - cron: '45 23 * * *' # Beispiel für 0:45 Uhr deutsche Winterzeit
-  workflow_dispatch: # Manueller Start bleibt erhalten
+    - cron: '50 23 * * *' # 0:45 Uhr deutsche Winterzeit (23:45 UTC)
+  workflow_dispatch:
 
 permissions:
-  contents: write # WICHTIG: Erlaubt dem Bot, die aktualisierte data.json hochzuladen
+  contents: write
 
 jobs:
   update-score-data:
@@ -27,7 +27,7 @@ jobs:
       - name: PLF Skript ausführen
         run: python PLF.py
 
-      - name: Aktualisierte index.html und data.json speichern
+      - name: Aktualisierte index.html speichern
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
