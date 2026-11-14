@@ -1,8 +1,8 @@
 name: PLF Auto-Update
 
 on:
-  schedule:
-    - cron: '50 23 * * *' # 0:45 Uhr deutsche Winterzeit (23:45 UTC)
+  repository_dispatch:
+    types: [run-plf-update]
   workflow_dispatch:
 
 permissions:
