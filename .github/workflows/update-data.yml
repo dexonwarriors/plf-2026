@@ -2,8 +2,8 @@ name: PLF Auto-Update
 
 on:
   schedule:
-    - cron: '*/5 * * * *' # Läuft alle 5 Minuten
-  workflow_dispatch: # Erlaubt auch einen manuellen Start per Knopfdruck
+    - cron: '45 23 * * *' # Beispiel für 0:45 Uhr deutsche Winterzeit
+  workflow_dispatch: # Manueller Start bleibt erhalten
 
 permissions:
   contents: write # WICHTIG: Erlaubt dem Bot, die aktualisierte data.json hochzuladen
