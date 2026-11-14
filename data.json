@@ -1,6 +1,6 @@
 {
   "current_week": 10,
-  "last_updated": "14.11.2026 21:58:19",
+  "last_updated": "14.11.2026 22:37:37",
   "all_weeks": {
     "1": {
       "current_matchups": [
@@ -31589,7 +31589,7 @@
           "Score 1": 0.0,
           "Score 2": 4.2,
           "Proj 1": 313.5,
-          "Proj 2": 330.54,
+          "Proj 2": 327.32,
           "Progress": 0
         },
         {
@@ -34190,17 +34190,17 @@
         ],
         "Dexon Warriors": [
           {
-            "name": "Patrick Mahomes",
+            "name": "Matthew Stafford",
             "position": "QB",
             "sort_key": "QB",
             "slot_id": 99,
-            "mu": 36.6,
-            "sigma": 23.23,
+            "mu": 33.38,
+            "sigma": 21.19,
             "live_points": 0.0,
             "pts_diff": 0.0,
             "status": "ACTIVE",
-            "photo": "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/3139477.png&w=350&h=250",
-            "pro_team": "KC",
+            "photo": "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/12483.png&w=350&h=250",
+            "pro_team": "LAR",
             "bar_progress": 0.0,
             "is_special_inactive": false
           },
@@ -35948,7 +35948,7 @@
       "Score 1": 0.0,
       "Score 2": 4.2,
       "Proj 1": 313.5,
-      "Proj 2": 330.54,
+      "Proj 2": 327.32,
       "Progress": 0
     },
     {
@@ -38549,17 +38549,17 @@
     ],
     "Dexon Warriors": [
       {
-        "name": "Patrick Mahomes",
+        "name": "Matthew Stafford",
         "position": "QB",
         "sort_key": "QB",
         "slot_id": 99,
-        "mu": 36.6,
-        "sigma": 23.23,
+        "mu": 33.38,
+        "sigma": 21.19,
         "live_points": 0.0,
         "pts_diff": 0.0,
         "status": "ACTIVE",
-        "photo": "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/3139477.png&w=350&h=250",
-        "pro_team": "KC",
+        "photo": "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/12483.png&w=350&h=250",
+        "pro_team": "LAR",
         "bar_progress": 0.0,
         "is_special_inactive": false
       },
