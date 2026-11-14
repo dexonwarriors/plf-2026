@@ -27,7 +27,7 @@ jobs:
       - name: PLF Skript ausführen
         run: python PLF.py
 
-- name: Aktualisierte index.html und data.json speichern
+      - name: Aktualisierte index.html und data.json speichern
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
