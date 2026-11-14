@@ -25,11 +25,11 @@ jobs:
           pip install pandas espn_api requests
 
       - name: PLF Skript ausführen
-        run: python PLF_data.py
+        run: python PLF.py
 
-      - name: Aktualisierte data.json speichern
+- name: Aktualisierte index.html und data.json speichern
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data.json
-          git diff --staged --quiet || (git commit -m "Automated data update [skip ci]" && git push)
+          git add index.html data.json
+          git diff --staged --quiet || (git commit -m "Automated HTML & data update [skip ci]" && git push)
