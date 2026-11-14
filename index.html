@@ -537,8 +537,17 @@
 // Funktion zum Laden der Live-Daten
 async function loadLeagueData(isInitialLoad = false) {
     try {
-        const response = await fetch(`data.json?t=${new Date().getTime()}`);
-        if (!response.ok) throw new Error("Fehler beim Laden der data.json");
+        // Automatische Erkennung: Auf GitHub Pages den Unterordner-Pfad nutzen, sonst normal
+        let fetchUrl = 'data.json';
+        if (window.location.hostname.includes('github.io')) {
+            fetchUrl = '/plf-2026/data.json';
+        }
+        fetchUrl += '?t=' + new Date().getTime(); // Verhindert Cache-Probleme
+
+        const response = await fetch(fetchUrl);
+        if (!response.ok) {
+            throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+        }
 
         window.LEAGUE_DATA = await response.json();
         console.log("📊 Live-Daten erfolgreich geladen:", window.LEAGUE_DATA);
