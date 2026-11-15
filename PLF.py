@@ -5,6 +5,7 @@ import pandas as pd
 from espn_api.football import League
 import re
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 import requests
 
 # ==========================================
@@ -835,7 +836,9 @@ def main():
     df_espn_clean = df_espn.drop(columns=cols_to_drop_espn)
 
     # Aktuellen Zeitstempel für das Frontend generieren (z.B. "15.11.2026, 12:09 Uhr")
-    formatted_timestamp = datetime.now().strftime("%d.%m.%Y, %H:%M Uhr")
+    formatted_timestamp = datetime.now(ZoneInfo('Europe/Berlin')).strftime(
+    '%d.%m.%Y %H:%M'
+)
 
     web_data = {
         "last_updated": formatted_timestamp,  # <--- HIER WIRD DER ZEITSTEMPEL ÜBERGEBEN
