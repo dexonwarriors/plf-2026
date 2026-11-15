@@ -522,30 +522,52 @@
             "Dexon Warriors": "DXW"
         };
 // Hier dein eingefügtes Skript für den Auto-Refresh:
+// Zentrale Initialisierungsfunktion für die UI
+function initApp(data) {
+    window.LEAGUE_DATA = data;
+    
+    // UI-Komponenten sicher initialisieren
+    if (typeof initWeekSelector === 'function') initWeekSelector();
+    if (typeof renderSideTables === 'function') renderSideTables();
+    if (typeof renderMainDashboard === 'function') renderMainDashboard();
+}
+
+// Funktion zum Abrufen frischer Echtzeit-Daten
 function fetchData() {
     const NPOINT_URL = 'https://api.npoint.io/48b07c027ad107655091';
 
     fetch(NPOINT_URL, { cache: 'no-store' })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Frische Echtzeit-Daten geladen:", data);
-            
-            // 1. Globale Daten befüllen
-            window.LEAGUE_DATA = data;
-            
-            // 2. ERST HIER die UI initialisieren, da data jetzt existiert!
-            initWeekSelector();
-            if (typeof renderSideTables === 'function') renderSideTables();
-            if (typeof renderMainDashboard === 'function') renderMainDashboard(); // (oder deine jeweilige Haupt-Renderfunktion)
+        .then(response => {
+            if (!response.ok) throw new Error("Netzwerkantwort war nicht erfolgreich");
+            return response.json();
         })
-        .catch(error => console.error("Fehler beim Laden der Daten:", error));
+        .then(data => {
+            console.log("Frische Echtzeit-Daten erfolgreich geladen:", data);
+            initApp(data);
+        })
+        .catch(error => {
+            console.warn("Live-Daten konnten nicht geladen werden. Verwende eingeschriebene Fallback-Daten:", error);
+            
+            // Fallback: Nutze die im Dokument hinterlegten Daten, falls vorhanden
+            if (window.LEAGUE_DATA) {
+                initApp(window.LEAGUE_DATA);
+            } else {
+                console.error("Keine Fallback-Daten im Speicher gefunden!");
+            }
+        });
 }
 
-// Beim Start der Seite einmal aufrufen
+// Beim Start der Seite ausführen
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Sofort mit den lokal eingeschriebenen Daten rendern (keine Wartezeit)
+    if (window.LEAGUE_DATA) {
+        initApp(window.LEAGUE_DATA);
+    }
+    
+    // 2. Im Hintergrund versuchen, frische Live-Daten zu laden
     fetchData();
     
-    // Falls du einen Auto-Refresh hast (z.B. alle 60 Sek):
+    // 3. Optionaler Auto-Refresh alle 60 Sekunden
     setInterval(fetchData, 60000);
 });
         
