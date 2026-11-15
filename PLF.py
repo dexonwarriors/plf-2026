@@ -5,6 +5,7 @@ import pandas as pd
 from espn_api.football import League
 import re
 from datetime import datetime, timedelta
+import zoneinfo
 
 # ==========================================
 # 1. KONFIGURATION & SETUP
@@ -695,7 +696,7 @@ def main():
             "Kategorie": "Coach der Woche", "Gewinner": t_coach["Team"],
             "Logo 1": t_coach["Logo"], "Logo 2": "",
             "Wochen-Wert": f"{t_coach['Effizienz (%)']} % des Potenzials",
-            "Saison-Kontext": get_season_context(t_coach["Team"], df_coach_sorted, "Coach_Raw", "in der Coach Wertung")
+            "Saison-Kontext": get_season_context(t_coach["Team"], df_def_sorted, "Coach_Raw", "in der Coach Wertung")
         })
 
         t_totw = df_cw.sort_values(by="Tatsächlich", ascending=False).iloc[0]
@@ -835,7 +836,9 @@ def main():
     cols_to_drop_espn = [c for c in ["Off_Raw", "Def_Raw", "Coach_Raw", "Offense (Pkt)", "Defense (Pkt)", "Coach Verschenkt"] if c in df_espn.columns]
     df_espn_clean = df_espn.drop(columns=cols_to_drop_espn)
 
-    formatted_timestamp = datetime.now().strftime("%d.%m.%Y, %H:%M Uhr")
+    # Korrekter Zeitstempel in Berliner Ortszeit (Sommer-/Winterzeit-sicher)
+    berlin_tz = zoneinfo.ZoneInfo("Europe/Berlin")
+    formatted_timestamp = datetime.now(berlin_tz).strftime("%d.%m.%Y, %H:%M Uhr")
 
     web_data = {
         "last_updated": formatted_timestamp,
@@ -858,7 +861,7 @@ def main():
         }
     }
 
-    # Direkte Injektion in die index.html (zwischen den Markern)
+    # Direkte Injektion in die index.html (zwischen den JS-Markern)
     if HTML_FILE.exists():
         try:
             with open(HTML_FILE, "r", encoding="utf-8") as f:
@@ -879,13 +882,13 @@ def main():
                     f.write(updated_html)
                 print("index.html erfolgreich mit aktuellen Daten aktualisiert!")
             else:
-                print("Fehler: Marker <!-- DATA_START --> oder <!-- DATA_END --> in index.html nicht gefunden!")
+                print("Fehler: Marker // DATA_START oder // DATA_END in index.html nicht gefunden!")
         except Exception as e:
             print(f"Fehler beim Schreiben in index.html: {e}")
     else:
         print(f"Warnung: {HTML_FILE} wurde nicht im Verzeichnis gefunden.")
 
-    # Optional: Lokale data.json für lokale Tests beibehalten
+    # Lokale data.json für lokale Tests beibehalten
     json_path = BASE_DIR / "data.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(web_data, f, ensure_ascii=False, indent=4)
