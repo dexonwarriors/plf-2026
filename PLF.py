@@ -5,7 +5,6 @@ import pandas as pd
 from espn_api.football import League
 import re
 from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 import requests
 
 # ==========================================
@@ -835,13 +834,10 @@ def main():
     cols_to_drop_espn = [c for c in ["Off_Raw", "Def_Raw", "Coach_Raw", "Offense (Pkt)", "Defense (Pkt)", "Coach Verschenkt"] if c in df_espn.columns]
     df_espn_clean = df_espn.drop(columns=cols_to_drop_espn)
 
-    # Aktuellen Zeitstempel für das Frontend generieren (z.B. "15.11.2026, 12:09 Uhr")
-    formatted_timestamp = datetime.now(ZoneInfo('Europe/Berlin')).strftime(
-    '%d.%m.%Y %H:%M'
-)
+    formatted_timestamp = datetime.now().strftime("%d.%m.%Y, %H:%M Uhr")
 
     web_data = {
-        "last_updated": formatted_timestamp,  # <--- HIER WIRD DER ZEITSTEMPEL ÜBERGEBEN
+        "last_updated": formatted_timestamp,
         "current_week": current_week,
         "all_weeks": all_weeks_data,
         "mvp_table": df_mvp.to_dict(orient="records"),
@@ -861,6 +857,13 @@ def main():
         }
     }
 
+    # 1. data.json im Hauptverzeichnis speichern (für den sauberen fetch-Befehl)
+    json_path = BASE_DIR / "data.json"
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(web_data, f, ensure_ascii=False, indent=4)
+    print("data.json erfolgreich erstellt/aktualisiert!")
+
+    # 2. (Optional) In die index.html einscheiben (als Fallback / Kompatibilität)
     html_path = BASE_DIR / "index.html"
     if html_path.exists():
         with open(html_path, "r", encoding="utf-8") as f:
@@ -872,8 +875,9 @@ def main():
 
         with open(html_path, "w", encoding="utf-8") as f:
             f.write(html_content)
+        print("index.html erfolgreich aktualisiert!")
             
-    print("Skript erfolgreich ausgeführt!")
+    print("Skript komplett erfolgreich ausgeführt!")
 
 if __name__ == "__main__":
     main()
