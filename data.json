@@ -1,5 +1,5 @@
 {
-    "last_updated": "15.11.2026, 13:01 Uhr",
+    "last_updated": "15.11.2026, 13:06 Uhr",
     "current_week": 10,
     "all_weeks": {
         "1": {
@@ -19359,7 +19359,7 @@
                         "sigma": 0.0,
                         "live_points": 0.0,
                         "pts_diff": 0.0,
-                        "status": "QUESTIONABLE",
+                        "status": "ACTIVE",
                         "photo": "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4374302.png&w=350&h=250",
                         "pro_team": "DET",
                         "bar_progress": 100.0,
@@ -33729,7 +33729,7 @@
                         "sigma": 16.3,
                         "live_points": 0.0,
                         "pts_diff": 0.0,
-                        "status": "QUESTIONABLE",
+                        "status": "ACTIVE",
                         "photo": "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4374302.png&w=350&h=250",
                         "pro_team": "DET",
                         "bar_progress": 0.0,
@@ -38088,7 +38088,7 @@
                 "sigma": 16.3,
                 "live_points": 0.0,
                 "pts_diff": 0.0,
-                "status": "QUESTIONABLE",
+                "status": "ACTIVE",
                 "photo": "https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/4374302.png&w=350&h=250",
                 "pro_team": "DET",
                 "bar_progress": 0.0,
