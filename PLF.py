@@ -5,7 +5,6 @@ import pandas as pd
 from espn_api.football import League
 import re
 from datetime import datetime, timedelta
-import requests
 
 # ==========================================
 # 1. KONFIGURATION & SETUP
@@ -13,12 +12,10 @@ import requests
 BASE_DIR = Path(__file__).resolve().parent
 CACHE_FILE = BASE_DIR / "espn_cache.json"
 HISTORIE_ORDNER = BASE_DIR / "Historie"
+HTML_FILE = BASE_DIR / "index.html"
 
 LEAGUE_ID = 929484013
 YEAR = 2026
-
-# Dein npoint.io Ziel (Deine ID)
-NPOINT_ID = "48b07c027ad107655091"
 
 ESPN_S2 = 'AEAERZvM%2B%2F2k6vQz%2FjywCaRJK%2BT9jlJTZRBgvweTS8Q0rg62zCtemnHlTo3uDODI2hEyxwp9AKP%2BWLJ%2FPMla6T0F819p7dR4kQjBafIfJbnnp%2F3RlBdSTdap%2BDlTomUTpsvzKrqNoM%2FmqaF9vuVAlX17FoCIU%2Bn9p1WaWce67BeocSvkl5w09QdvxVyPgZjIWEKnZlqBWPC7yktJam6WqdxWDRqF44TyryQWf2EosruLIq1aJ0toq2KgQ2lCTepAow5tqfRgN4i5DjBZx5M6fMA0xFYQ7R92SJSEOEkplfP9ng%3D%3D'
 SWID = '{1C32344B-8776-407F-8007-001AEA9745E3}'
@@ -126,6 +123,7 @@ def fetch_complete_league_data(league):
     nfl_game_progress = {}  
     
     try:
+        import requests
         url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?week={current_week}&seasontype=2&season={YEAR}"
         resp = requests.get(url, timeout=5)
         if resp.status_code == 200:
@@ -860,18 +858,34 @@ def main():
         }
     }
 
-    # 1. Daten direkt an npoint.io senden (Echtzeit, kein CDN-Caching)
-    try:
-        url = f"https://api.npoint.io/{NPOINT_ID}"
-        response = requests.put(url, json=web_data, timeout=10)
-        if response.status_code == 200:
-            print("Daten erfolgreich an npoint.io übertragen – sofort in Echtzeit verfügbar!")
-        else:
-            print(f"Fehler beim npoint.io-Upload: {response.status_code} - {response.text}")
-    except Exception as e:
-        print(f"Netzwerkfehler beim npoint.io-Upload: {e}")
+    # Direkte Injektion in die index.html (zwischen den Markern)
+    if HTML_FILE.exists():
+        try:
+            with open(HTML_FILE, "r", encoding="utf-8") as f:
+                html_content = f.read()
+            
+            json_payload = f"window.LEAGUE_DATA = {json.dumps(web_data, ensure_ascii=False)};"
+            
+            start_marker = "// DATA_START"
+            end_marker = "// DATA_END"
+            
+            if start_marker in html_content and end_marker in html_content:
+                start_idx = html_content.find(start_marker) + len(start_marker)
+                end_idx = html_content.find(end_marker)
+                
+                updated_html = html_content[:start_idx] + "\n" + json_payload + "\n" + html_content[end_idx:]
+                
+                with open(HTML_FILE, "w", encoding="utf-8") as f:
+                    f.write(updated_html)
+                print("index.html erfolgreich mit aktuellen Daten aktualisiert!")
+            else:
+                print("Fehler: Marker <!-- DATA_START --> oder <!-- DATA_END --> in index.html nicht gefunden!")
+        except Exception as e:
+            print(f"Fehler beim Schreiben in index.html: {e}")
+    else:
+        print(f"Warnung: {HTML_FILE} wurde nicht im Verzeichnis gefunden.")
 
-    # 2. Lokale Kopie beibehalten (optional für Fallback)
+    # Optional: Lokale data.json für lokale Tests beibehalten
     json_path = BASE_DIR / "data.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(web_data, f, ensure_ascii=False, indent=4)
