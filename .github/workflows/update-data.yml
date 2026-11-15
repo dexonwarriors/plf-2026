@@ -1,25 +1,69 @@
 name: PLF Auto-Update
 
+
+
 on:
+
   repository_dispatch:
+
     types: [run-plf-update]
+
   workflow_dispatch:
 
+
+
+permissions:
+
+  contents: write
+
+
+
 jobs:
+
   update-score-data:
+
     runs-on: ubuntu-latest
+
     steps:
+
       - name: Repository auschecken
+
         uses: actions/checkout@v4
 
+
+
       - name: Python einrichten
+
         uses: actions/setup-python@v5
+
         with:
+
           python-version: '3.12'
 
+
+
       - name: Python-Bibliotheken installieren
+
         run: |
+
           pip install pandas espn_api requests
 
+
+
       - name: PLF Skript ausführen
+
         run: python PLF.py
+
+
+
+      - name: Aktualisierte index.html speichern
+
+        run: |
+
+          git config --global user.name "github-actions[bot]"
+
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add index.html
+
+          git diff --staged --quiet || (git commit -m "Automated HTML & data update [skip ci]" && git push) 
