@@ -523,29 +523,31 @@
         };
 // Hier dein eingefügtes Skript für den Auto-Refresh:
 function fetchData() {
-    // Hier jetzt die direkte npoint.io-URL verwenden
     const NPOINT_URL = 'https://api.npoint.io/48b07c027ad107655091';
 
     fetch(NPOINT_URL, { cache: 'no-store' })
         .then(response => response.json())
         .then(data => {
-            console.log("Frische Daten in Echtzeit geladen:", data);
+            console.log("Frische Echtzeit-Daten geladen:", data);
             
-            // Globale Daten aktualisieren
+            // 1. Globale Daten befüllen
             window.LEAGUE_DATA = data;
             
-            // Deine UI-Render-Funktionen hier aufrufen, z.B.:
-            // renderMatchups();
-            // renderStandings();
+            // 2. ERST HIER die UI initialisieren, da data jetzt existiert!
+            initWeekSelector();
+            if (typeof renderSideTables === 'function') renderSideTables();
+            if (typeof renderMainDashboard === 'function') renderMainDashboard(); // (oder deine jeweilige Haupt-Renderfunktion)
         })
-        .catch(error => console.error("Fehler beim Laden:", error));
+        .catch(error => console.error("Fehler beim Laden der Daten:", error));
 }
 
-// Alle 60 Sekunden automatisch abrufen
-setInterval(fetchData, 60000);
-
-// Direkt beim Laden der Seite einmal ausführen
-fetchData();
+// Beim Start der Seite einmal aufrufen
+document.addEventListener('DOMContentLoaded', () => {
+    fetchData();
+    
+    // Falls du einen Auto-Refresh hast (z.B. alle 60 Sek):
+    setInterval(fetchData, 60000);
+});
         
 // ==========================================
 // 8. GLOBALE LEAGUE DATA & SPIELER-DATENBANK
@@ -781,13 +783,20 @@ window.addEventListener('popstate', (event) => {
 
 function initWeekSelector() {
     const selector = document.getElementById('week-selector');
-    if (!selector) return;
-    
+    if (!selector)
+        return;
+
     selector.innerHTML = '';
-    
+
+    // SICHERHEITSPRÜFUNG: Abbrechen, falls LEAGUE_DATA oder all_weeks noch nicht geladen sind
+    if (!window.LEAGUE_DATA || !window.LEAGUE_DATA.all_weeks) {
+        console.warn("initWeekSelector: Warten auf Daten von npoint.io...");
+        return;
+    }
+
     // Hole alle verfügbaren Wochen aus den Spieldaten und sortiere sie numerisch
     const availableWeeks = Object.keys(window.LEAGUE_DATA.all_weeks).map(Number).sort((a, b) => a - b);
-    
+
     availableWeeks.forEach(weekNum => {
         const option = document.createElement('option');
         option.value = weekNum;
