@@ -17,6 +17,9 @@ HISTORIE_ORDNER = BASE_DIR / "Historie"
 LEAGUE_ID = 929484013
 YEAR = 2026
 
+# Dein npoint.io Ziel (Deine ID)
+NPOINT_ID = "48b07c027ad107655091"
+
 ESPN_S2 = 'AEAERZvM%2B%2F2k6vQz%2FjywCaRJK%2BT9jlJTZRBgvweTS8Q0rg62zCtemnHlTo3uDODI2hEyxwp9AKP%2BWLJ%2FPMla6T0F819p7dR4kQjBafIfJbnnp%2F3RlBdSTdap%2BDlTomUTpsvzKrqNoM%2FmqaF9vuVAlX17FoCIU%2Bn9p1WaWce67BeocSvkl5w09QdvxVyPgZjIWEKnZlqBWPC7yktJam6WqdxWDRqF44TyryQWf2EosruLIq1aJ0toq2KgQ2lCTepAow5tqfRgN4i5DjBZx5M6fMA0xFYQ7R92SJSEOEkplfP9ng%3D%3D'
 SWID = '{1C32344B-8776-407F-8007-001AEA9745E3}'
 
@@ -857,25 +860,22 @@ def main():
         }
     }
 
-    # 1. data.json im Hauptverzeichnis speichern (für den sauberen fetch-Befehl)
+    # 1. Daten direkt an npoint.io senden (Echtzeit, kein CDN-Caching)
+    try:
+        url = f"https://api.npoint.io/{NPOINT_ID}"
+        response = requests.put(url, json=web_data, timeout=10)
+        if response.status_code == 200:
+            print("Daten erfolgreich an npoint.io übertragen – sofort in Echtzeit verfügbar!")
+        else:
+            print(f"Fehler beim npoint.io-Upload: {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"Netzwerkfehler beim npoint.io-Upload: {e}")
+
+    # 2. Lokale Kopie beibehalten (optional für Fallback)
     json_path = BASE_DIR / "data.json"
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(web_data, f, ensure_ascii=False, indent=4)
-    print("data.json erfolgreich erstellt/aktualisiert!")
-
-    # 2. (Optional) In die index.html einscheiben (als Fallback / Kompatibilität)
-    html_path = BASE_DIR / "index.html"
-    if html_path.exists():
-        with open(html_path, "r", encoding="utf-8") as f:
-            html_content = f.read()
-
-        json_string = json.dumps(web_data, ensure_ascii=False)
-        new_block = f"// DATA_START\n        window.LEAGUE_DATA = {json_string};\n        // DATA_END"
-        html_content = re.sub(r'// DATA_START.*?// DATA_END', new_block, html_content, flags=re.DOTALL)
-
-        with open(html_path, "w", encoding="utf-8") as f:
-            f.write(html_content)
-        print("index.html erfolgreich aktualisiert!")
+    print("Lokale data.json ebenfalls aktualisiert.")
             
     print("Skript komplett erfolgreich ausgeführt!")
 
